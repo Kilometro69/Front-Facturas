@@ -25,7 +25,7 @@ const TIPOS_IDENTIFICACION = [
 
 const VACIO = {
   nombre: '', nombreComercial: '', tipoIdentificacion: '01', numeroIdentificacion: '',
-  codigoActividad: '', provincia: '', canton: '', distrito: '', otrasSenas: '',
+  provincia: '', canton: '', distrito: '', otrasSenas: '',
   correo: '', email: '', password: '', confirmarPassword: '', nombreUsuario: '',
 };
 
@@ -67,7 +67,6 @@ export default function Registro({ marca = 'Billing Kilometer', onRegistrado, on
           nombre: datos.nombre,
           nombreComercial: datos.nombreComercial || undefined,
           identificacion: { tipo: datos.tipoIdentificacion, numero: datos.numeroIdentificacion },
-          codigoActividad: datos.codigoActividad,
           ubicacion: {
             provincia: datos.provincia, canton: datos.canton, distrito: datos.distrito,
             otrasSenas: datos.otrasSenas,
@@ -163,10 +162,6 @@ export default function Registro({ marca = 'Billing Kilometer', onRegistrado, on
               <Col sm={7}>
                 <Form.Label className="small">Número de identificación *</Form.Label>
                 <Form.Control required value={datos.numeroIdentificacion} onChange={cambiar('numeroIdentificacion')} />
-              </Col>
-              <Col sm={12}>
-                <Form.Label className="small">Código de actividad económica *</Form.Label>
-                <Form.Control required placeholder="Ej. 551002" value={datos.codigoActividad} onChange={cambiar('codigoActividad')} />
               </Col>
             </Row>
 

@@ -17,6 +17,7 @@ import Editor from './pages/Editor';
 import DetalleDiseno from './pages/DetalleDiseno';
 import Comprobantes from './pages/Comprobantes';
 import Integracion from './pages/Integracion';
+import Perfil from './pages/Perfil';
 
 const MARCA = 'Billing Kilometer';
 
@@ -81,6 +82,7 @@ export default function App() {
           <Route path="/diseno" element={<Editor />} />
           <Route path="/comprobantes" element={<Comprobantes />} />
           <Route path="/integracion" element={<Integracion />} />
+          <Route path="/perfil" element={<Perfil />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -127,9 +129,12 @@ function BarraNavegacion({ sesion, onSalir }) {
           </Nav>
 
           <Nav className="align-items-lg-center">
-            <span className="text-secondary small me-3">
+            <Button
+              variant="link" size="sm" className="text-secondary text-decoration-none me-2"
+              onClick={() => navegar('/perfil')}
+            >
               {sesion.tenant.nombre} · {sesion.usuario.email}
-            </span>
+            </Button>
             <Button variant="outline-secondary" size="sm" onClick={onSalir}>
               Cerrar sesión
             </Button>

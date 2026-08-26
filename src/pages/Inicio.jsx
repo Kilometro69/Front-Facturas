@@ -23,6 +23,7 @@ export default function Inicio() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [creando, setCreando] = useState(null);
+  const [marcandoId, setMarcandoId] = useState(null);
 
   useEffect(() => {
     Promise.all([api.modelos(), api.plantillas()])
@@ -34,6 +35,22 @@ export default function Inicio() {
       .catch((err) => setError(err.message))
       .finally(() => setCargando(false));
   }, []);
+
+  // marcarComoPredeterminada: la plantilla que se usa cuando un comprobante se emite sin indicar
+  // "plantillaId" explícito (ver Guía de Integración, sección 4.1). No hace falta recargar la
+  // lista completa: alcanza con actualizar "porDefecto" localmente.
+  async function marcarComoPredeterminada(id) {
+    setMarcandoId(id);
+    setError(null);
+    try {
+      await api.marcarPorDefecto(id);
+      setPorDefecto(id);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setMarcandoId(null);
+    }
+  }
 
   if (cargando) {
     return <Container className="py-5 text-center"><Spinner animation="border" /></Container>;
@@ -134,6 +151,15 @@ export default function Inicio() {
                       >
                         Editar
                       </Button>
+                      {String(d._id) !== porDefecto && (
+                        <Button
+                          size="sm" variant="outline-dark"
+                          disabled={marcandoId === d._id}
+                          onClick={() => marcarComoPredeterminada(d._id)}
+                        >
+                          {marcandoId === d._id ? <Spinner size="sm" animation="border" /> : 'Usar como predeterminada'}
+                        </Button>
+                      )}
                     </Stack>
                   </Card.Body>
                 </Card>

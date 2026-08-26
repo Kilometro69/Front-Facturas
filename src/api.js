@@ -90,6 +90,8 @@ const MENSAJES = {
   PASSWORD_DEBIL: 'La contraseña debe tener al menos 8 caracteres',
   IDENTIFICACION_YA_REGISTRADA: 'Ya existe una cuenta registrada con esa identificación',
   CORREO_YA_REGISTRADO: 'Ya existe una cuenta registrada con ese correo',
+  FALTA_PASSWORD_ACTUAL: 'Debe indicar su contraseña actual para cambiarla',
+  PASSWORD_INCORRECTA: 'La contraseña actual no es correcta',
 };
 
 export const api = {
@@ -102,6 +104,10 @@ export const api = {
   ubicaciones: (provincia) => pedir(`/ubicaciones${provincia ? `?provincia=${provincia}` : ''}`),
   yo:      () => pedir('/auth/me'),
   renovar: () => pedir('/auth/renovar', { metodo: 'POST' }),
+  perfil:  () => pedir('/perfil'),
+  // actualizarPerfil: usuario y tenant son opcionales e independientes -- se puede mandar
+  // cualquiera de los dos, o los dos juntos.
+  actualizarPerfil: (usuario, tenant) => pedir('/perfil', { metodo: 'PUT', cuerpo: { usuario, tenant } }),
 
   bloques:   () => pedir('/bloques'),
   modelos:   () => pedir('/modelos'),
