@@ -92,6 +92,7 @@ const MENSAJES = {
   CORREO_YA_REGISTRADO: 'Ya existe una cuenta registrada con ese correo',
   FALTA_PASSWORD_ACTUAL: 'Debe indicar su contraseña actual para cambiarla',
   PASSWORD_INCORRECTA: 'La contraseña actual no es correcta',
+  SERVICIO_NO_DISPONIBLE: 'El servicio de Firma Digital no respondió. Intente de nuevo más tarde',
 };
 
 export const api = {
@@ -108,6 +109,8 @@ export const api = {
   // actualizarPerfil: usuario y tenant son opcionales e independientes -- se puede mandar
   // cualquiera de los dos, o los dos juntos.
   actualizarPerfil: (usuario, tenant) => pedir('/perfil', { metodo: 'PUT', cuerpo: { usuario, tenant } }),
+
+  verificar: () => pedir('/verificacion', { metodo: 'POST' }),
 
   bloques:   () => pedir('/bloques'),
   modelos:   () => pedir('/modelos'),
