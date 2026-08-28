@@ -11,12 +11,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Container, Card, Form, Row, Col, Button, Alert, Spinner } from 'react-bootstrap';
+import { Container, Card, Form, Row, Col, Button, Alert, Spinner, Badge } from 'react-bootstrap';
 import { api } from '../api';
 
 export default function Perfil() {
   const [cargando, setCargando] = useState(true);
   const [datos, setDatos] = useState(null);
+  const [verificacion, setVerificacion] = useState({ nivel: 'sin_verificar', verificadoEn: null });
+  const [verificando, setVerificando] = useState(false);
   const [passwordActual, setPasswordActual] = useState('');
   const [passwordNueva, setPasswordNueva] = useState('');
   const [confirmarNueva, setConfirmarNueva] = useState('');
@@ -26,21 +28,45 @@ export default function Perfil() {
 
   useEffect(() => {
     api.perfil()
-      .then((d) => setDatos({
-        nombre: d.usuario.nombre || '',
-        email: d.usuario.email || '',
-        nombreComercial: d.tenant.nombreComercial || '',
-        codigoPaisTelefono: d.tenant.telefono?.codigoPais || '',
-        numTelefono: d.tenant.telefono?.numTelefono || '',
-        correo: d.tenant.correos?.[0] || '',
-        provincia: d.tenant.ubicacion?.provincia || '',
-        canton: d.tenant.ubicacion?.canton || '',
-        distrito: d.tenant.ubicacion?.distrito || '',
-        otrasSenas: d.tenant.ubicacion?.otrasSenas || '',
-      }))
+      .then((d) => {
+        setDatos({
+          nombre: d.usuario.nombre || '',
+          email: d.usuario.email || '',
+          nombreComercial: d.tenant.nombreComercial || '',
+          codigoPaisTelefono: d.tenant.telefono?.codigoPais || '',
+          numTelefono: d.tenant.telefono?.numTelefono || '',
+          correo: d.tenant.correos?.[0] || '',
+          provincia: d.tenant.ubicacion?.provincia || '',
+          canton: d.tenant.ubicacion?.canton || '',
+          distrito: d.tenant.ubicacion?.distrito || '',
+          otrasSenas: d.tenant.ubicacion?.otrasSenas || '',
+        });
+        setVerificacion(d.tenant.verificacion || { nivel: 'sin_verificar', verificadoEn: null });
+      })
       .catch((err) => setError(err.message))
       .finally(() => setCargando(false));
   }, []);
+
+  // verificarAhora: le pide al backend que consulte Firma Digital (HSM Sign CR) por la
+  // identificación de este tenant. Nunca bloquea nada -- solo actualiza la etiqueta.
+  async function verificarAhora() {
+    setVerificando(true);
+    setError('');
+    setExito('');
+    try {
+      const resultado = await api.verificar();
+      setVerificacion(resultado.verificado ? { nivel: 'verificado', verificadoEn: new Date().toISOString() } : { nivel: 'sin_verificar', verificadoEn: null });
+      if (resultado.verificado) {
+        setExito('Su cuenta quedó verificada.');
+      } else {
+        setError(resultado.motivo || 'No se pudo verificar la cuenta.');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setVerificando(false);
+    }
+  }
 
   function cambiar(campo) {
     return (e) => setDatos((d) => ({ ...d, [campo]: e.target.value }));
@@ -102,6 +128,32 @@ export default function Perfil() {
 
       {error && <Alert variant="danger" className="py-2 small">{error}</Alert>}
       {exito && <Alert variant="success" className="py-2 small">{exito}</Alert>}
+
+      <Card className="mb-3 border-0 bg-light">
+        <Card.Body className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <span className="fw-semibold">Verificación de identidad</span>
+              {verificacion.nivel === 'verificado' ? (
+                <Badge bg="success">Verificada</Badge>
+              ) : (
+                <Badge bg="warning" text="dark">Sin verificar</Badge>
+              )}
+            </div>
+            <p className="text-secondary small mb-0">
+              {verificacion.nivel === 'verificado'
+                ? 'Su identificación fue confirmada contra Firma Digital.'
+                : 'Para poder facturar, verifique su identificación contra Firma Digital (HSM Sign CR).'}
+            </p>
+          </div>
+          {verificacion.nivel !== 'verificado' && (
+            <Button size="sm" variant="dark" disabled={verificando} onClick={verificarAhora}>
+              {verificando ? <Spinner size="sm" animation="border" className="me-2" /> : null}
+              Verificar ahora
+            </Button>
+          )}
+        </Card.Body>
+      </Card>
 
       <Form onSubmit={guardar}>
         <Card className="mb-3">

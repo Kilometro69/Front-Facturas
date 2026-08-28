@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
-import { Navbar, Nav, Container, Button, Spinner, Modal, ProgressBar } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button, Spinner, Modal, ProgressBar, Alert } from 'react-bootstrap';
 import { api, token } from './api';
 import { useSesion, formatearRestante, DURACION, AVISO_EN } from './sesion';
 import Login from './pages/Login';
@@ -74,6 +74,8 @@ export default function App() {
     <BrowserRouter>
       <BarraNavegacion sesion={sesion} onSalir={() => cerrar()} />
 
+      {sesion.tenant.verificacion?.nivel !== 'verificado' && <AvisoSinVerificar />}
+
       <main>
         <Routes>
           <Route path="/" element={<Inicio />} />
@@ -94,6 +96,23 @@ export default function App() {
         onSalir={() => cerrar()}
       />
     </BrowserRouter>
+  );
+}
+
+/**
+ * Aviso persistente mientras el tenant no esté verificado contra Firma Digital. No bloquea
+ * nada (el tenant sigue pudiendo facturar, ver TenantSchema.verificacion en el backend) -- es
+ * solo un recordatorio visible en cada página, hasta que se verifique desde Mi perfil.
+ */
+function AvisoSinVerificar() {
+  const navegar = useNavigate();
+  return (
+    <Alert variant="warning" className="mb-0 rounded-0 py-2 text-center small">
+      Su cuenta todavía no está verificada contra Firma Digital.{' '}
+      <Alert.Link onClick={() => navegar('/perfil')} style={{ cursor: 'pointer' }}>
+        Verificarla ahora
+      </Alert.Link>
+    </Alert>
   );
 }
 
@@ -128,12 +147,15 @@ function BarraNavegacion({ sesion, onSalir }) {
             <Nav.Link as={NavLink} to="/integracion">Integración</Nav.Link>
           </Nav>
 
-          <Nav className="align-items-lg-center">
+          <Nav className="align-items-lg-center gap-2">
+            <span className="text-secondary small d-none d-lg-inline">
+              {sesion.tenant.nombre} · {sesion.usuario.email}
+            </span>
             <Button
-              variant="link" size="sm" className="text-secondary text-decoration-none me-2"
+              variant="outline-secondary" size="sm"
               onClick={() => navegar('/perfil')}
             >
-              {sesion.tenant.nombre} · {sesion.usuario.email}
+              Mi perfil
             </Button>
             <Button variant="outline-secondary" size="sm" onClick={onSalir}>
               Cerrar sesión
