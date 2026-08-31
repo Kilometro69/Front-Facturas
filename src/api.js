@@ -93,6 +93,8 @@ const MENSAJES = {
   FALTA_PASSWORD_ACTUAL: 'Debe indicar su contraseña actual para cambiarla',
   PASSWORD_INCORRECTA: 'La contraseña actual no es correcta',
   SERVICIO_NO_DISPONIBLE: 'El servicio de Firma Digital no respondió. Intente de nuevo más tarde',
+  CUENTA_YA_VERIFICADA: 'No se puede cambiar la identificación de una cuenta ya verificada',
+  DISTRITO_INVALIDO: 'El distrito debe ser solo su código (1 o 2 dígitos), no la provincia y el cantón juntos',
 };
 
 export const api = {
