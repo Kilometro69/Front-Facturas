@@ -183,7 +183,18 @@ export default function Registro({ marca = 'Billing Kilometer', onRegistrado, on
               </Col>
               <Col sm={4}>
                 <Form.Label className="small">Distrito (código) *</Form.Label>
-                <Form.Control required placeholder="Ej. 01" value={datos.distrito} onChange={cambiar('distrito')} />
+                <Form.Control
+                  required placeholder="Ej. 01" value={datos.distrito} onChange={cambiar('distrito')}
+                  maxLength={2} inputMode="numeric" pattern="[0-9]{1,2}"
+                  title="2 dígitos como máximo, solo el código del distrito (no provincia+cantón+distrito juntos)"
+                />
+                <Form.Text className="text-secondary">
+                  Solo el distrito (1 o 2 dígitos, ej. <strong>01</strong>) — no la provincia ni el
+                  cantón juntos. Puede consultarlo en la{' '}
+                  <a href="https://sistemas.inec.cr/sitiosen/sitiosen/FrmGeografico.aspx" target="_blank" rel="noreferrer">
+                    división territorial del INEC
+                  </a>.
+                </Form.Text>
               </Col>
               <Col sm={12}>
                 <Form.Label className="small">Otras señas *</Form.Label>

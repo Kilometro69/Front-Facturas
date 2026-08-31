@@ -14,6 +14,13 @@ import { useEffect, useState } from 'react';
 import { Container, Card, Form, Row, Col, Button, Alert, Spinner, Badge } from 'react-bootstrap';
 import { api } from '../api';
 
+const TIPOS_IDENTIFICACION = [
+  { codigo: '01', nombre: 'Cédula Física' },
+  { codigo: '02', nombre: 'Cédula Jurídica' },
+  { codigo: '03', nombre: 'DIMEX' },
+  { codigo: '04', nombre: 'NITE' },
+];
+
 export default function Perfil() {
   const [cargando, setCargando] = useState(true);
   const [datos, setDatos] = useState(null);
@@ -33,6 +40,8 @@ export default function Perfil() {
           nombre: d.usuario.nombre || '',
           email: d.usuario.email || '',
           nombreComercial: d.tenant.nombreComercial || '',
+          tipoIdentificacion: d.tenant.identificacion?.tipo || '01',
+          numeroIdentificacion: d.tenant.identificacion?.numero || '',
           codigoPaisTelefono: d.tenant.telefono?.codigoPais || '',
           numTelefono: d.tenant.telefono?.numTelefono || '',
           correo: d.tenant.correos?.[0] || '',
@@ -92,6 +101,11 @@ export default function Perfil() {
 
       const tenant = {
         nombreComercial: datos.nombreComercial,
+        // Solo se manda si todavía se puede editar -- una vez verificada, el backend la
+        // rechaza igual, pero no tiene sentido ni intentarlo.
+        identificacion: verificacion.nivel !== 'verificado'
+          ? { tipo: datos.tipoIdentificacion, numero: datos.numeroIdentificacion }
+          : undefined,
         telefono: datos.codigoPaisTelefono && datos.numTelefono
           ? { codigoPais: Number(datos.codigoPaisTelefono), numTelefono: Number(datos.numTelefono) }
           : undefined,
@@ -210,6 +224,36 @@ export default function Perfil() {
                 <Form.Label className="small">Nombre comercial</Form.Label>
                 <Form.Control value={datos.nombreComercial} onChange={cambiar('nombreComercial')} />
               </Col>
+
+              <Col sm={5}>
+                <Form.Label className="small">Tipo de identificación</Form.Label>
+                {verificacion.nivel === 'verificado' ? (
+                  <Form.Control
+                    plaintext readOnly
+                    value={TIPOS_IDENTIFICACION.find((t) => t.codigo === datos.tipoIdentificacion)?.nombre || datos.tipoIdentificacion}
+                  />
+                ) : (
+                  <Form.Select value={datos.tipoIdentificacion} onChange={cambiar('tipoIdentificacion')}>
+                    {TIPOS_IDENTIFICACION.map((t) => (
+                      <option key={t.codigo} value={t.codigo}>{t.nombre}</option>
+                    ))}
+                  </Form.Select>
+                )}
+              </Col>
+              <Col sm={7}>
+                <Form.Label className="small">Número de identificación</Form.Label>
+                {verificacion.nivel === 'verificado' ? (
+                  <Form.Control plaintext readOnly value={datos.numeroIdentificacion} />
+                ) : (
+                  <Form.Control value={datos.numeroIdentificacion} onChange={cambiar('numeroIdentificacion')} />
+                )}
+                {verificacion.nivel === 'verificado' && (
+                  <Form.Text className="text-secondary">
+                    No se puede cambiar: la cuenta ya está verificada contra Firma Digital.
+                  </Form.Text>
+                )}
+              </Col>
+
               <Col sm={4}>
                 <Form.Label className="small">Código de país</Form.Label>
                 <Form.Control placeholder="506" value={datos.codigoPaisTelefono} onChange={cambiar('codigoPaisTelefono')} />
@@ -240,7 +284,17 @@ export default function Perfil() {
               </Col>
               <Col sm={4}>
                 <Form.Label className="small">Distrito</Form.Label>
-                <Form.Control value={datos.distrito} onChange={cambiar('distrito')} />
+                <Form.Control
+                  value={datos.distrito} onChange={cambiar('distrito')}
+                  maxLength={2} inputMode="numeric" pattern="[0-9]{1,2}"
+                  title="2 dígitos como máximo, solo el código del distrito (no provincia+cantón+distrito juntos)"
+                />
+                <Form.Text className="text-secondary">
+                  Solo el código (1 o 2 dígitos, ej. <strong>01</strong>) —{' '}
+                  <a href="https://sistemas.inec.cr/sitiosen/sitiosen/FrmGeografico.aspx" target="_blank" rel="noreferrer">
+                    consultarlo en el INEC
+                  </a>.
+                </Form.Text>
               </Col>
               <Col sm={12}>
                 <Form.Label className="small">Otras señas</Form.Label>
