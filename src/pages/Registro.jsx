@@ -2,9 +2,7 @@
  * Registro.jsx
  * -----------------------------------------------------------------------------
  * Alta de un cliente nuevo. Se piden exactamente los campos que el emisor
- * necesita para poder facturar de inmediato (ver core/fieldRules.js, sección
- * "emisor"): así el cliente no descubre un campo faltante recién cuando
- * intenta emitir su primera factura.
+ * necesita para poder facturar de inmediato
  *
  * Al terminar, el servidor devuelve una API key que solo se muestra UNA vez
  * (igual que las que se crean después desde Integración): por eso el registro
@@ -33,6 +31,7 @@ export default function Registro({ marca = 'Billing Kilometer', onRegistrado, on
   const [datos, setDatos] = useState(VACIO);
   const [provincias, setProvincias] = useState([]);
   const [cantones, setCantones] = useState([]);
+  const [distritos, setDistritos] = useState([]);
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [apiKey, setApiKey] = useState(null); // no-null = paso 2, "llave generada"
@@ -46,6 +45,11 @@ export default function Registro({ marca = 'Billing Kilometer', onRegistrado, on
     if (!datos.provincia) { setCantones([]); return; }
     api.ubicaciones(datos.provincia).then((d) => setCantones(d.cantones)).catch(() => setCantones([]));
   }, [datos.provincia]);
+
+  useEffect(() => {
+    if (!datos.provincia || !datos.canton) { setDistritos([]); return; }
+    api.ubicaciones(datos.provincia, datos.canton).then((d) => setDistritos(d.distritos)).catch(() => setDistritos([]));
+  }, [datos.provincia, datos.canton]);
 
   function cambiar(campo) {
     return (e) => setDatos((d) => ({ ...d, [campo]: e.target.value }));
@@ -182,19 +186,14 @@ export default function Registro({ marca = 'Billing Kilometer', onRegistrado, on
                 </Form.Select>
               </Col>
               <Col sm={4}>
-                <Form.Label className="small">Distrito (código) *</Form.Label>
-                <Form.Control
-                  required placeholder="Ej. 01" value={datos.distrito} onChange={cambiar('distrito')}
-                  maxLength={2} inputMode="numeric" pattern="[0-9]{1,2}"
-                  title="2 dígitos como máximo, solo el código del distrito (no provincia+cantón+distrito juntos)"
-                />
-                <Form.Text className="text-secondary">
-                  Solo el distrito (1 o 2 dígitos, ej. <strong>01</strong>) — no la provincia ni el
-                  cantón juntos. Puede consultarlo en la{' '}
-                  <a href="https://sistemas.inec.cr/sitiosen/sitiosen/FrmGeografico.aspx" target="_blank" rel="noreferrer">
-                    división territorial del INEC
-                  </a>.
-                </Form.Text>
+                <Form.Label className="small">Distrito *</Form.Label>
+                <Form.Select
+                  required value={datos.distrito} onChange={cambiar('distrito')}
+                  disabled={!datos.canton}
+                >
+                  <option value="">Seleccione...</option>
+                  {distritos.map((d) => <option key={d.codigo} value={d.codigo}>{d.nombre}</option>)}
+                </Form.Select>
               </Col>
               <Col sm={12}>
                 <Form.Label className="small">Otras señas *</Form.Label>
