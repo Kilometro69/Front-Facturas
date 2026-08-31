@@ -6,7 +6,7 @@
  * ubicación del tenant. A propósito NO incluye identificación ni código de
  * actividad económica: esos quedan atados a la verificación real de
  * existencia del cliente (ver TenantSchema.verificacion en el backend), no a
- * una edición libre desde acá.
+ * una edición libre desde aca
  * -----------------------------------------------------------------------------
  */
 
@@ -24,6 +24,9 @@ const TIPOS_IDENTIFICACION = [
 export default function Perfil() {
   const [cargando, setCargando] = useState(true);
   const [datos, setDatos] = useState(null);
+  const [provincias, setProvincias] = useState([]);
+  const [cantones, setCantones] = useState([]);
+  const [distritos, setDistritos] = useState([]);
   const [verificacion, setVerificacion] = useState({ nivel: 'sin_verificar', verificadoEn: null });
   const [verificando, setVerificando] = useState(false);
   const [passwordActual, setPasswordActual] = useState('');
@@ -54,7 +57,22 @@ export default function Perfil() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setCargando(false));
+
+    api.ubicaciones().then((d) => setProvincias(d.provincias)).catch(() => setProvincias([]));
   }, []);
+
+  // Cascada provincia -> cantón -> distrito, igual que en Registro.jsx. Se dispara también al
+  // terminar de cargar el perfil (para traer el cantón/distrito ya guardados), y de nuevo cada
+  // vez que la persona cambia la selección.
+  useEffect(() => {
+    if (!datos?.provincia) { setCantones([]); return; }
+    api.ubicaciones(datos.provincia).then((d) => setCantones(d.cantones)).catch(() => setCantones([]));
+  }, [datos?.provincia]);
+
+  useEffect(() => {
+    if (!datos?.provincia || !datos?.canton) { setDistritos([]); return; }
+    api.ubicaciones(datos.provincia, datos.canton).then((d) => setDistritos(d.distritos)).catch(() => setDistritos([]));
+  }, [datos?.provincia, datos?.canton]);
 
   // verificarAhora: le pide al backend que consulte Firma Digital (HSM Sign CR) por la
   // identificación de este tenant. Nunca bloquea nada -- solo actualiza la etiqueta.
@@ -276,25 +294,24 @@ export default function Perfil() {
             <Row className="g-3">
               <Col sm={4}>
                 <Form.Label className="small">Provincia</Form.Label>
-                <Form.Control value={datos.provincia} onChange={cambiar('provincia')} />
+                <Form.Select value={datos.provincia} onChange={cambiar('provincia')}>
+                  <option value="">Seleccione...</option>
+                  {provincias.map((p) => <option key={p.codigo} value={p.codigo}>{p.nombre}</option>)}
+                </Form.Select>
               </Col>
               <Col sm={4}>
                 <Form.Label className="small">Cantón</Form.Label>
-                <Form.Control value={datos.canton} onChange={cambiar('canton')} />
+                <Form.Select value={datos.canton} onChange={cambiar('canton')} disabled={!datos.provincia}>
+                  <option value="">Seleccione...</option>
+                  {cantones.map((c) => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
+                </Form.Select>
               </Col>
               <Col sm={4}>
                 <Form.Label className="small">Distrito</Form.Label>
-                <Form.Control
-                  value={datos.distrito} onChange={cambiar('distrito')}
-                  maxLength={2} inputMode="numeric" pattern="[0-9]{1,2}"
-                  title="2 dígitos como máximo, solo el código del distrito (no provincia+cantón+distrito juntos)"
-                />
-                <Form.Text className="text-secondary">
-                  Solo el código (1 o 2 dígitos, ej. <strong>01</strong>) —{' '}
-                  <a href="https://sistemas.inec.cr/sitiosen/sitiosen/FrmGeografico.aspx" target="_blank" rel="noreferrer">
-                    consultarlo en el INEC
-                  </a>.
-                </Form.Text>
+                <Form.Select value={datos.distrito} onChange={cambiar('distrito')} disabled={!datos.canton}>
+                  <option value="">Seleccione...</option>
+                  {distritos.map((d) => <option key={d.codigo} value={d.codigo}>{d.nombre}</option>)}
+                </Form.Select>
               </Col>
               <Col sm={12}>
                 <Form.Label className="small">Otras señas</Form.Label>

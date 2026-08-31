@@ -104,7 +104,13 @@ export const api = {
   // despues desde la pantalla de Integración).
   registro: (tenant, usuario) => pedir('/auth/registro', { metodo: 'POST', cuerpo: { tenant, usuario } }),
   // ubicaciones: provincias y cantones para el formulario de registro (ruta pública, no exige token).
-  ubicaciones: (provincia) => pedir(`/ubicaciones${provincia ? `?provincia=${provincia}` : ''}`),
+  ubicaciones: (provincia, canton) => {
+    const parametros = new URLSearchParams();
+    if (provincia) parametros.set('provincia', provincia);
+    if (canton) parametros.set('canton', canton);
+    const query = parametros.toString();
+    return pedir(`/ubicaciones${query ? `?${query}` : ''}`);
+  },
   yo:      () => pedir('/auth/me'),
   renovar: () => pedir('/auth/renovar', { metodo: 'POST' }),
   perfil:  () => pedir('/perfil'),
